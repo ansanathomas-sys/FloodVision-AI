@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FloodVision AI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#eef3fa;--bg2:#dfe9f6;--card:#fff;--text:#0f2038;--muted:#5a6f8a;--line:#d3deec;--accent:#2563eb;--land:#e6eefb;--low:#16a34a;--med:#d98e04;--high:#e11d48;--warn:#fff4d6;--warnt:#6b4a00;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1423;--bg2:#12304f;--card:#101f36;--text:#e8eef7;--muted:#9db4d1;--line:#1f3a5c;--accent:#5ec8ff;--land:#132843;--low:#2ecc71;--med:#f5b83d;--high:#ff4d4f;--warn:#2b2208;--warnt:#f3dfb0}}
+:root[data-theme="dark"]{--bg:#0a1423;--bg2:#12304f;--card:#101f36;--text:#e8eef7;--muted:#9db4d1;--line:#1f3a5c;--accent:#5ec8ff;--land:#132843;--low:#2ecc71;--med:#f5b83d;--high:#ff4d4f;--warn:#2b2208;--warnt:#f3dfb0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);background:var(--bg);background-image:radial-gradient(circle at 10% 0,var(--bg2),transparent 55%);min-height:100vh}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 16px 40px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:2.2rem;letter-spacing:-.5px;background:linear-gradient(90deg,#3b82f6,#7b8cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);margin:4px 0 0}
+.pill{display:inline-block;padding:5px 12px;border-radius:99px;font-size:.75rem;font-weight:700;letter-spacing:.4px;background:var(--warn);color:var(--warnt);border:1px solid var(--med)}
+.notice{background:var(--warn);color:var(--warnt);border-left:4px solid var(--med);border-radius:8px;padding:10px 14px;margin:12px 0;font-size:.9rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.controls{display:flex;gap:22px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.controls label{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;display:block;margin-bottom:4px}
+input[type=range]{width:260px;max-width:100%;accent-color:var(--accent)}
+.chk label{display:inline-flex;gap:5px;align-items:center;margin-right:12px;text-transform:none;font-size:.9rem;color:var(--text)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
+.kpi .l{color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.8px}
+.kpi .v{font-size:1.9rem;font-weight:800;line-height:1.2}
+.kpi .s{color:var(--muted);font-size:.78rem}
+.grid2{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-bottom:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:14px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+h2{font-size:1.05rem;margin:0 0 8px}
+.cap{color:var(--muted);font-size:.78rem;margin-top:6px}
+svg.map{width:100%;height:auto;max-height:560px;display:block}
+.land{fill:var(--land);stroke:var(--line);stroke-width:1.5}
+.dot{cursor:pointer;stroke:var(--card);stroke-width:2;transition:r .2s}
+.dot:hover{stroke:var(--text)}
+.lbl{font-size:9px;fill:var(--muted);pointer-events:none}
+.leg span{display:inline-flex;align-items:center;gap:5px;margin-right:12px;font-size:.82rem}
+.leg i{width:11px;height:11px;border-radius:50%;display:inline-block}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:620px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.6px}
+.tag{padding:2px 9px;border-radius:99px;font-weight:700;font-size:.75rem;color:#fff}
+.bar{height:6px;border-radius:4px;background:var(--line);min-width:70px}.bar b{display:block;height:100%;border-radius:4px}
+.fl{list-style:none;padding:0;margin:0}.fl li{padding:9px 0;border-bottom:1px solid var(--line);font-size:.88rem;cursor:pointer}
+.fl small{color:var(--muted);display:block}
+canvas{max-height:330px}
+button{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:7px 12px;font-weight:600;cursor:pointer}
+select{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px}
+footer{color:var(--muted);font-size:.78rem;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>🌊 FloodVision AI</h1><p class="sub">Rapid flood-risk screening for Kerala: see which areas need attention first.</p></div>
+  <span class="pill">● SIMULATED SAMPLE DATA, NOT REAL CONDITIONS</span>
+</header>
+<div class="notice"><b>Demo only.</b> All rainfall and water-level values are artificially generated to demonstrate the concept. They do not describe real current or past conditions in Kerala. Location names are real; elevations and danger levels are illustrative placeholders, not official CWC/KSDMA values. For real alerts, check IMD, CWC and KSDMA.</div>
+
+<div class="card controls">
+  <div><label>Simulated rainfall scenario: <b id="scn"></b></label><input id="sl" type="range" min="0" max="3" step="1" value="2"></div>
+  <div class="chk"><label>Show risk categories</label>
+    <label><input type="checkbox" value="Low" checked>Low</label><label><input type="checkbox" value="Medium" checked>Medium</label><label><input type="checkbox" value="High" checked>High</label></div>
+</div>
+
+<div class="kpis" id="kpis"></div>
+
+<div class="grid2">
+  <div class="card"><h2>Interactive risk map (schematic)</h2>
+    <svg class="map" id="map" viewBox="0 0 300 520"></svg>
+    <div class="leg"><span><i style="background:var(--low)"></i>Low</span><span><i style="background:var(--med)"></i>Medium</span><span><i style="background:var(--high)"></i>High</span></div>
+    <div class="cap">Schematic outline of Kerala, not survey-accurate. Marker size grows with risk score. Click a marker to see its trend below.</div></div>
+  <div class="card"><h2>Priority list</h2><div class="cap" style="margin:0 0 6px">Highest risk first. Click to open its 7-day trend.</div><ul class="fl" id="fl"></ul></div>
+</div>
+
+<div class="grid3">
+  <div class="card"><h2>3-day rainfall (simulated, mm)</h2><canvas id="c1"></canvas></div>
+  <div class="card"><h2>Water level vs danger mark (simulated, %)</h2><canvas id="c2"></canvas></div>
+</div>
+
+<div class="card" style="margin-bottom:14px">
+  <h2>7-day trend: <select id="sel"></select></h2><canvas id="c3"></canvas>
+  <div class="cap">Bars: simulated daily rainfall. Line: simulated water-level estimate (m). Dashed: illustrative danger mark.</div>
+</div>
+
+<div class="card" style="margin-bottom:14px">
+  <h2>Areas requiring further assessment</h2>
+  <p id="summary" style="margin:0 0 10px"></p>
+  <div class="tw"><table><thead><tr><th>Location</th><th>Risk</th><th>Score</th><th>Rain 24h</th><th>Rain 3d</th><th>Level / danger</th><th>Why flagged</th></tr></thead><tbody id="tb"></tbody></table></div>
+  <p><button id="csv">Download CSV</button></p>
+</div>
+
+<div class="card">
+  <h2>Method and data</h2>
+  <p style="margin:0 0 8px"><b>Risk score</b> = 0.4 × (3-day rainfall / 200 mm) + 0.4 × (water level relative to its danger mark) + 0.2 × low-elevation factor. Thresholds: Low &lt; 0.35, Medium 0.35 to 0.60, High ≥ 0.60. Weights are for demonstration and are not calibrated against historical floods.</p>
+  <p style="margin:0 0 8px"><b>Data:</b> rainfall is randomly generated with a fixed seed; water level is a simple estimate from recent rainfall. Nothing here is a measurement.</p>
+  <p style="margin:0"><b>Roadmap:</b> replace simulated inputs with Sentinel-1 radar water-extent (sees through cloud), satellite rainfall and soil moisture, and official gauge data.</p>
+</div>
+<footer>FloodVision AI · hackathon prototype · simulated data · not for operational use</footer>
+</div>
+
+<script>
+const L=[["Kuttanad (Alappuzha)",9.37,76.41,1,1.2,.9,1,3],["Kochi",9.93,76.27,5,1,.8,.8,2.5],["Chalakudy",10.31,76.33,15,1.1,.85,1.2,3.5],["Thrissur",10.53,76.21,12,1,.7,1,3],["Ranni (Pathanamthitta)",9.39,76.78,30,1.1,1,1.5,4],["Kottayam",9.59,76.52,3,1,.9,1,3],["Idukki (Painavu)",9.85,76.97,900,.8,.8,1.5,4.5],["Munnar",10.09,77.06,1500,.8,.6,1,3.5],["Wayanad (Kalpetta)",11.61,76.08,780,.9,.75,1,3.5],["Kozhikode",11.26,75.78,5,.9,.5,.8,2.5],["Kannur",11.87,75.37,10,.9,.45,1,3],["Palakkad",10.79,76.65,85,.8,.4,.7,2.5],["Thiruvananthapuram",8.52,76.94,10,.9,.35,.8,2.5],["Kollam",8.89,76.61,5,.9,.5,1,3]];
+const SC=[["Light rain",.5],["Moderate monsoon",1],["Heavy rain",1.8],["Extreme rain event",2.8]];
+const OUT=[[74.86,12.45],[74.95,12],[75.2,11.8],[75.55,11.45],[75.78,11.1],[75.95,10.8],[76.1,10.5],[76.2,10.2],[76.3,9.9],[76.33,9.5],[76.45,9.1],[76.55,8.85],[76.75,8.55],[77,8.3],[77.2,8.4],[77.15,8.8],[77.2,9.2],[77.1,9.6],[77.25,9.95],[77.2,10.3],[76.9,10.5],[76.85,10.8],[76.7,11.1],[76.55,11.4],[76.4,11.75],[75.9,12],[75.5,12.4],[75.3,12.45]];
+const DAYS=["D-6","D-5","D-4","D-3","D-2","D-1","Today"],COL={Low:"var(--low)",Medium:"var(--med)",High:"var(--high)"};
+const px=(lo,la)=>[((lo-74.8)/2.5*270+15).toFixed(1),((12.6-la)/4.6*490+15).toFixed(1)];
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let D=[],sel=0,charts={};
+function build(){
+  const m=SC[+sl.value][1],r=rng(42),ramp=[0,0,0,0,.5,1,.8];
+  D=L.map((l,i)=>{
+    const rain=ramp.map(k=>Math.pow(r(),1.5)*24*m*.6+35*m*l[5]*k);
+    let soak=0;const lev=rain.map(x=>{soak=soak*.6+x;return l[6]+(l[7]-l[6])*(soak/140)*l[4]});
+    const r3=rain.slice(4).reduce((a,b)=>a+b,0),frac=(lev[6]-l[6])/(l[7]-l[6]);
+    const sc=.4*Math.min(r3/200,1)+.4*Math.min(Math.max(frac,0),1.2)/1.2+.2*Math.max(0,Math.min(1,1-l[3]/60));
+    const cat=sc<.35?"Low":sc<.6?"Medium":"High",w=[];
+    if(frac>=1)w.push("water level at/above danger mark");else if(frac>=.7)w.push("water level approaching danger mark");
+    if(r3>=100)w.push("heavy 3-day rainfall ("+Math.round(r3)+" mm)");else if(r3>=50)w.push("notable 3-day rainfall ("+Math.round(r3)+" mm)");
+    if(l[3]<=10)w.push("low-lying terrain");
+    return{i,name:l[0],lat:l[1],lon:l[2],dang:l[7],norm:l[6],rain,lev,r24:rain[6],r3,frac,sc,cat,why:w.join("; ")||"no strong indicators"};
+  });
+}
+const shown=()=>{const on=[...document.querySelectorAll(".chk input:checked")].map(x=>x.value);return D.filter(d=>on.includes(d.cat))};
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function render(){
+  scn.textContent=SC[+sl.value][0];
+  const n=c=>D.filter(d=>d.cat==c).length,pk=D.reduce((a,b)=>b.r24>a.r24?b:a);
+  kpis.innerHTML=[["Locations monitored",D.length,"Kerala sample sites","var(--accent)"],["High risk",n("High"),"priority assessment","var(--high)"],["Medium risk",n("Medium"),"keep under watch","var(--med)"],["Low risk",n("Low"),"no strong indicators","var(--low)"],["Peak 24h rainfall",Math.round(pk.r24)+" mm",pk.name+" (sim.)","var(--accent)"]].map(k=>`<div class="card kpi"><div class="l">${k[0]}</div><div class="v" style="color:${k[3]}">${k[1]}</div><div class="s">${k[2]}</div></div>`).join("");
+  let s=`<path class="land" d="M${OUT.map(p=>px(...p).join(",")).join("L")}Z"/>`;
+  shown().forEach(d=>{const [x,y]=px(d.lon,d.lat);s+=`<circle class="dot" data-i="${d.i}" cx="${x}" cy="${y}" r="${(7+d.sc*10).toFixed(1)}" fill="${COL[d.cat]}"><title>${d.name}: ${d.cat} (score ${d.sc.toFixed(2)}, simulated)</title></circle><text class="lbl" x="${+x+13}" y="${+y+3}">${d.name.split(" (")[0]}</text>`});
+  map.innerHTML=s;
+  const fl=[...D].filter(d=>d.cat!="Low").sort((a,b)=>b.sc-a.sc);
+  document.getElementById("fl").innerHTML=fl.length?fl.map(d=>`<li data-i="${d.i}"><span class="tag" style="background:${COL[d.cat]}">${d.cat}</span> <b>${d.name}</b> · ${d.sc.toFixed(2)}<small>${d.why}</small></li>`).join(""):"<li>No Medium or High locations in this scenario.</li>";
+  const h=D.filter(d=>d.cat=="High").length,md=D.filter(d=>d.cat=="Medium").length,t=fl[0];
+  summary.innerHTML=t?`<b>${h} High</b> and <b>${md} Medium</b> locations are flagged for further assessment (simulated). Highest score: <b>${t.name}</b> (${t.sc.toFixed(2)}): ${t.why}. Flagging means "look at this next", not "a flood is occurring".`:"No locations flagged in this simulated scenario.";
+  tb.innerHTML=fl.map(d=>`<tr><td><b>${d.name}</b></td><td><span class="tag" style="background:${COL[d.cat]}">${d.cat}</span></td><td><div class="bar"><b style="width:${d.sc*100}%;background:${COL[d.cat]}"></b></div>${d.sc.toFixed(2)}</td><td>${Math.round(d.r24)} mm</td><td>${Math.round(d.r3)} mm</td><td>${Math.round(d.frac*100)}%</td><td>${d.why}</td></tr>`).join("");
+  charts.forEach?.(c=>c.destroy());charts=[];
+  const tc=css("--muted"),gc=css("--line");Chart.defaults.color=tc;Chart.defaults.borderColor=gc;
+  const bar=(id,key,lab,line)=>{const a=[...D].sort((x,y)=>y[key]-x[key]);charts.push(new Chart(id,{type:"bar",data:{labels:a.map(d=>d.name.split(" (")[0]),datasets:[{label:lab,data:a.map(d=>key=="frac"?+(d.frac*100).toFixed(0):+d.r3.toFixed(0)),backgroundColor:a.map(d=>css("--"+(d.cat=="Medium"?"med":d.cat.toLowerCase())))}]},options:{indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:lab}}}}}))};
+  bar(c1,"r3","mm (simulated)");bar(c2,"frac","% of danger mark (simulated, 100 = danger)");
+  trend();
+}
+function trend(){
+  const d=D[sel];sel_.value=sel;if(charts[2])charts[2].destroy();
+  charts[2]=new Chart(c3,{data:{labels:DAYS,datasets:[{type:"bar",label:"Rainfall mm (simulated)",data:d.rain.map(x=>+x.toFixed(1)),backgroundColor:css("--accent"),yAxisID:"y"},{type:"line",label:"Water level m (simulated est.)",data:d.lev.map(x=>+x.toFixed(2)),borderColor:css("--med"),backgroundColor:css("--med"),yAxisID:"y1",tension:.3},{type:"line",label:"Danger mark (illustrative)",data:DAYS.map(()=>d.dang),borderColor:css("--high"),borderDash:[6,5],pointRadius:0,yAxisID:"y1"}]},options:{scales:{y:{title:{display:true,text:"mm"}},y1:{position:"right",grid:{drawOnChartArea:false},title:{display:true,text:"m"}}}}});
+}
+const sel_=document.getElementById("sel");
+sel_.innerHTML=L.map((l,i)=>`<option value="${i}">${l[0]}</option>`).join("");
+sel_.onchange=()=>{sel=+sel_.value;trend()};
+document.addEventListener("click",e=>{const t=e.target.closest("[data-i]");if(t){sel=+t.dataset.i;trend();c3.scrollIntoView({behavior:"smooth",block:"center"})}});
+sl.oninput=()=>{build();render()};
+document.querySelectorAll(".chk input").forEach(c=>c.onchange=render);
+csv.onclick=()=>{const rows=[["Location","Risk","Score","Rain24h_mm","Rain3d_mm","Level_pct_of_danger","Why","Data"]].concat(D.filter(d=>d.cat!="Low").map(d=>[d.name,d.cat,d.sc.toFixed(2),d.r24.toFixed(0),d.r3.toFixed(0),(d.frac*100).toFixed(0),d.why,"SIMULATED"]));
+  const b=new Blob([rows.map(r=>r.map(x=>'"'+x+'"').join(",")).join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="floodvision_flagged_SIMULATED.csv";a.click()};
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",render);
+build();render();
+</script>
+</body>
+</html>
